@@ -9,43 +9,17 @@
 #include <string.h>
 #define _GNU_SOURCE
 
-void handler (int signum) {
-    // if(SIGUSR1 == signum) {
-    //     fprintf(stderr, "Number of files read: %d, Number of bytes processed: %d\n", byte_count, file_count);
-    // }
-    // else {
-    //     fprintf(stderr, "*** SIGUSR2 received, moving onto file %d\n", file_count++);
-    // }
-    //if sigusr1, print total number of files and bytes processed so far which catgrepmore should keep track of, then resume
-    //if sigusr2, move onto next input file, pretty much as if EOF was seen. Print a brief informative message to standard error,
-    // such as "*** SIGUSR2 received, moving on to file #5". The best way to implement this is with setjmp/longjmp or sigsetjmp/siglongjmp.
-}
 
 void grep(char *pattern) {
    printf("in grep function\n");
    printf("pattern in grep: %s\n", pattern);
-   execlp("grep", "grep", "-a", pattern, stdin, NULL);
+   execlp("cat","cat", NULL);
 }
 
 void more() {  
     printf("in more function\n");
     execlp("more", "more", NULL);
 }
-
-// void partial_write(int byte_count, int write_size,char buf[], FILE *fp){
-//     int count = write(buf[byte_count - 1], write_size - byte_count, fp);
-//     if(count > 0 && count < 4096 - byte_count) {
-//         partial_write(count, write_size - byte_count, buf, fp);
-//     }
-// }
-
-// void partial_write(int byte_count, int write_size, char buf[], int fd) {
-//     int count = write(fd, buf[byte_count - 1], write_size - byte_count);
-    
-//     if(count > 0 && count < 4096 - byte_count) {
-//         partial_write(count, write_size - byte_count, buf, fd);
-//     }
-// }
 
 int main(int argc, char* argv[]) {
     char buf[4096];
@@ -62,23 +36,14 @@ int main(int argc, char* argv[]) {
     int write_bytes = 0;
     
     sa.sa_flags = SA_RESTART;
-    sa.sa_handler = handler;
 
     strcpy(pattern, argv[1]);
 
     //printf("pattern: %s\n", pattern);
 
-    if(sigaction(SIGUSR1, &sa, NULL) == -1) {
-        fprintf(stderr, "Error with sigaction for SIGUSR1: %s\n", strerror(errno));
-    }
-    if(sigaction(SIGUSR2, &sa, NULL) == -1) {
-        fprintf(stderr, "Error with sigaction for SIGUSR2: %s\n", strerror(errno));
-    }
-
     printf("Before for loop\n");
 
-    for ( int i = 2; i < argc; i++) { //number of files
-        fd = open(argv[i], O_RDONLY);
+        fd = open(argv[2], O_RDONLY);
         printf("before pipe setup\n");
         if (pipe(pipeone) < 0) {
             fprintf(stderr, "error creating pipe one: %s\n", strerror(errno));
@@ -89,8 +54,7 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "error creating pipe two: %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
-
-        if (((fd = open(argv[i], O_RDONLY)) < 0)) {
+        if (fd < 0) {
             fprintf(stderr, "Error opening infile: %s\n", strerror(errno));
         }
         printf("fd: %d\n", fd);
@@ -98,7 +62,6 @@ int main(int argc, char* argv[]) {
         printf("after file increment\n");
         printf("file_count: %d\n", file_count);
         // printf("fd: %d\n", fd);
-        while( read_bytes != 0){
             read_bytes = read(fd, buf, 4096);
             printf("fd: %d\n", fd);
             printf("read byte is %d\n",read_bytes);
@@ -144,32 +107,4 @@ int main(int argc, char* argv[]) {
                 grep(pattern);
                 //exit(0);
             }
-            //else if (child_grep == -1) {
-            //fprintf
-            wait(1);
-            (child_more = fork());
-            if (child_more == 0) {
-                printf("in the more\n");
-                //set stdin of more process
-                dup2(pipetwo[0], STDIN_FILENO);
-                close(pipetwo[0]);
-                more();
-                exit(0);
-            }
-
-            wait(1);
-            //else if (child_grep == -1) {
-            //fprintf
-            // else {
-            //     printf("hello from parent\n");
-            // }
-            // add wait
-            // wait(child_more)
-            // wait(child_grep);
-        }
-    }
-    // partial write at the end b/c it needs to be processed through dup2, get grep'ed and more'ed before it even gets written
-    // and a check for partial write function
-    return 0;
 }
-
