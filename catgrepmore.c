@@ -13,8 +13,8 @@
 void grep(char *pattern) {
    printf("in grep function\n");
    printf("pattern in grep: %s\n", pattern);
-   execlp("cat","cat", NULL);
-   //execlp("grep","grep","-a",pattern, NULL);
+   //execlp("cat","cat", NULL);
+   execlp("grep","grep","-a",pattern, NULL);
 }
 
 void more() {  
