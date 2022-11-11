@@ -14,6 +14,7 @@ void grep(char *pattern) {
    printf("in grep function\n");
    printf("pattern in grep: %s\n", pattern);
    execlp("cat","cat", NULL);
+   //execlp("grep","grep","-a",pattern, NULL);
 }
 
 void more() {  
@@ -34,6 +35,7 @@ int main(int argc, char* argv[]) {
     int write_size = 4096;
     int read_bytes = 1;
     int write_bytes = 0;
+    int wstatus = 1;
     
     sa.sa_flags = SA_RESTART;
 
@@ -62,12 +64,35 @@ int main(int argc, char* argv[]) {
         printf("after file increment\n");
         printf("file_count: %d\n", file_count);
         // printf("fd: %d\n", fd);
+        (child_grep = fork());
+        
+        if (child_grep == 0) {
+            //printf("pattern: %s\n", pattern);
+            //set stdin of grep process
+            dup2(pipeone[0], STDIN_FILENO);
+            // child closes up input side of grep child
+            close(pipeone[0]);
+            //set stdout of grep process to pipe 2
+            //dup2(pipetwo[1], STDOUT_FILENO);
+            //close(pipetwo[1]);
+            close(pipeone[1]); //make sure to close everywhere so EOF condition occurs
+            // grep to print lines that match
+            //execlp("grep", "grep", pattern, NULL); 
+            grep(pattern);
+            //exit(0);
+        }
+        while(read_bytes != 0){
             read_bytes = read(fd, buf, 4096);
             printf("fd: %d\n", fd);
             printf("read byte is %d\n",read_bytes);
             if(read_bytes == -1) { 
                 fprintf(stderr, "Error reading from infile: %s/n", strerror(errno));
                 exit(EXIT_FAILURE);
+            } else if(read_bytes == 0){
+                close(fd);
+                close(pipeone[1]);
+                close(pipeone[0]);
+                break;
             }
             else {
             // instead of byte_count do write_size because we're trying to check the armount of bytes written and compare it to the bytes read
@@ -88,23 +113,9 @@ int main(int argc, char* argv[]) {
                     byte_count = 1 + write_bytes;
                 }
             }
-            read_bytes = read(fd, buf, 4096);
+            //read_bytes = read(fd, buf, 4096);
         
             // remember to write error messages for dup2, grep and close
-            (child_grep = fork());
-            
-            if (child_grep == 0) {
-                //printf("pattern: %s\n", pattern);
-                //set stdin of grep process
-                dup2(pipeone[0], STDIN_FILENO);
-                // child closes up input side of grep child
-                close(pipeone[0]);
-                //set stdout of grep process to pipe 2
-                //dup2(pipetwo[1], STDOUT_FILENO);
-                //close(pipetwo[1]);
-                // grep to print lines that match
-                //execlp("grep", "grep", pattern, NULL); 
-                grep(pattern);
-                //exit(0);
-            }
+        }
+        wait(&wstatus);
 }
