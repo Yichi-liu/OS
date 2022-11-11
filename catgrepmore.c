@@ -19,6 +19,7 @@ void grep(char *pattern) {
 
 void more() {  
     printf("in more function\n");
+    //execlp("cat","cat", NULL);
     execlp("more", "more", NULL);
 }
 
@@ -78,9 +79,25 @@ int main(int argc, char* argv[]) {
             close(pipeone[1]); //make sure to close everywhere so EOF condition occurs
             // grep to print lines that match
             //execlp("grep", "grep", pattern, NULL); 
+            close(pipetwo[1]);
+            close(pipetwo[0]);
             grep(pattern);
             //exit(0);
         }
+
+        child_more = fork();
+        if(child_more == 0) {
+            printf("in the more\n");
+            //set stdin of more process
+            close(pipeone[1]);
+            close(pipeone[0]);
+            dup2(pipetwo[0], STDIN_FILENO);
+            close(pipetwo[1]);
+            close(pipetwo[0]);
+            more();
+            //exit(0);
+        }
+
         while(read_bytes != 0){
             read_bytes = read(fd, buf, 4096);
             printf("fd: %d\n", fd);
