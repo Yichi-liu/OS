@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     int cVal;
     struct stat st, st2, st3, st4;                      // everything else
     struct stat stdin;                                  // for stdin 
-    int pattern_length, file_length, index;
+    int pattern_length, file_length, count;
     bool pattern_file_flag = false;
     bool context_flag = false;
     int isStdin;
@@ -41,65 +41,31 @@ int main(int argc, char **argv) {
             case 'p': //pattern specification
                 pattern = optarg;
                 //printf("pattern: %s\n", pattern);
-                //https://stackoverflow.com/questions/5297248/how-to-compare-last-n-characters-of-a-string-to-another-string-in-c
-                int len = strlen(pattern); 
-                const char *last_four = &pattern[len-4];
-                if((strcmp(last_four, ".txt") == 0) || (strcmp(last_four, ".jpg") == 0) || (strcmp(last_four, ".gif") == 0) || (strcmp(last_four, ".tif") == 0)) {
-                    printf("hello\n");
-                    pattern_file = pattern;
-                    index = 3;
-                    pattern_file_flag = true;
-                }
-                else {
-                    pattern_length = strlen(pattern);
-                    index = 3;
-                }                        
+                pattern_file = pattern;
+                pattern_file_flag = true;
+                pattern_length = strlen(pattern);                 
                 break;
             case 'c': //context exists
                 cVal = atoi(optarg);
-                pattern = argv[optind];
                 context_flag = true;
-                int len_c = strlen(pattern);
-                const char *last_four_c = &pattern[len_c-4];
-                if((strcmp(last_four_c, ".txt") == 0) || (strcmp(last_four_c, ".jpg") == 0) || (strcmp(last_four_c, ".gif") == 0) || (strcmp(last_four_c, ".tif") == 0)) {
-                    pattern_file = pattern;
-                    index = 4;
-                    pattern_file_flag = true;
-                }
-                else {
-                    pattern_length = strlen(pattern);
-                    index = 4;
-                }    
                 break;
             default:
                 fprintf(stderr, "NOT A VALID FLAG: %s\n", strerror(errno));
                 break;
         }
     }
-    if ((optind < argc) && (index == 0)) {
+    if (!pattern_file_flag) {
         pattern = argv[optind];
-        int len_d = strlen(pattern);
-        const char *last_four_d = &pattern[len_d-4];
-        if((strcmp(last_four_d, ".txt") == 0) || (strcmp(last_four_d, ".jpg") == 0) || (strcmp(last_four_d, ".gif") == 0) || (strcmp(last_four_d, ".tif") == 0)) {
-            pattern_file = pattern;
-            index = 2;
-            pattern_file_flag = true;
-        }
-        else {
-            pattern_length = strlen(pattern);
-            index = 2;
-        } 
-    }  
+        pattern_length = strlen(pattern);
+    }   
     // if there's a -p flag but no input file (argc == optind) or if there's a -c flag but no input file 
     // then a stdin in redirection is necessary
-    if ( (optind == (argc - 1) && index == 3) || (optind == (argc - 1) && index == 4)) {   // check for stdin redirection                                           
+    if ( (optind == argc && pattern_file_flag) || ((optind == (argc - 1))&& !pattern_file_flag)) {   // check for stdin redirection                                           
         if (fstat(0, &stdin) != 0) {                                      // cuz 0 is fd for stdin
             fprintf("Error getting stdin file struct %d: %s", errno, strerror(errno));
         }
-        isStdin = 1;
-        printf("optind works\n", optind);                                                        // indicates that there is a stdin redirection 
+        isStdin = 1;                                                    // indicates that there is a stdin redirection 
     }
-    printf("optind is %d\n", optind);
     if (pattern_file_flag) {                                                    // check whether a pattern file descriptor exists
         int pf_fd = open(pattern_file, O_RDONLY);                               // pattern file, file descriptor                        
         if(pf_fd < 0) {
@@ -122,14 +88,23 @@ int main(int argc, char **argv) {
     // therefore the number of files being looped through is only one "stdin in is the sole input file" 
     int Number_Documents;
     if (isStdin == 1) {   // requires redirection
-        index = 0;                               // so that count starts at 0 in the for loop for files  
-        Number_Documents = 1;                   // so that the number of documents ends at 1 b/c "stdin inb is the sole innput file"
+        if(!pattern_file_flag){
+        Number_Documents = 0;                   // so that the number of documents ends at 0 b/c "stdin inb is the sole innput file"
+        }
+        else {
+            Number_Documents = 1;
+        }
     }                                           // somehow we also need to make current_file = stdin, right?
     else {
-        Number_Documents = argc;                
+        if(!pattern_file_flag){
+            Number_Documents = argc - optind - 1;
+        }
+        else {
+            Number_Documents = argc - optind;
+        }            
     }
     //loop through all the files
-    for(int i = index; i < Number_Documents; i++) {
+    for(int i = 0; i < Number_Documents; i++) {
         retVal = 1;
 
         // if there's a stdin then open has to use use 0 
@@ -137,7 +112,12 @@ int main(int argc, char **argv) {
             fd = 0;                              // stdin fd is 0
         }
         else {
-            curr_file = argv[i];                // otherwise open normally and save the specified fd from open sys call
+            if(!pattern_file_flag){
+                curr_file = argv[optind + 1];
+            }
+            else {
+                curr_file = argv[optind];
+            }               // otherwise open normally and save the specified fd from open sys call
             fd = open(curr_file, O_RDONLY);
             printf("fd: %d\n", fd);
         }
@@ -166,8 +146,8 @@ int main(int argc, char **argv) {
     
         src = mmap(NULL, file_length, PROT_READ, MAP_PRIVATE, fd, 0);           // memory map for input file
         if(src == (caddr_t) -1) {
-            fprintf(stderr, "ERROR WITH MMAP OF INPUT FILE: %s\n", strerror(errno));
-            exit(-1);
+            fprintf(stderr, "ERROR WITH MMAP OF INPUT FILE: %s\n", strerror(errno)); // no exit if it can't use mmap on a given input source
+            continue;
         }
         char *start = src;
         int remaining = file_length - pattern_length;
