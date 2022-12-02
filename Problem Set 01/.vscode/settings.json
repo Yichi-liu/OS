@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "problem03.h": "c",
+        "stat.h": "c"
+    }
+}

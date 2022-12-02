@@ -1,0 +1,16 @@
+➜  Problem Set 02 ./a.out -u Alex test
+42794998  0 rrw-r--r--  1  alex staff  0 122-9-4 9:44 test/silly 
+42537101  0 drwxr-xr-x  6  alex staff  192 122-8-28 16:29 test/FirstA 
+42537540  0 rrw-r--r--  1  alex staff  0 122-8-28 16:29 test/FirstA/Is 
+42537534  0 rrw-r--r--  1  alex staff  0 122-8-28 16:29 test/FirstA/This 
+42537158  0 drwxr-xr-x  6  alex staff  192 122-8-28 16:29 test/FirstA/SecondB 
+42537172  0 drwxr-xr-x  5  alex staff  160 122-8-28 16:30 test/FirstA/SecondB/ThirdC 
+42537215  0 drwxr-xr-x  3  alex staff  96 122-8-28 16:30 test/FirstA/SecondB/ThirdC/FifthE 
+42537557  0 rrw-r--r--  1  alex staff  0 122-8-28 16:30 test/FirstA/SecondB/ThirdC/toCheck 
+42537546  0 rrw-r--r--  1  alex staff  0 122-8-28 16:29 test/FirstA/SecondB/aTest 
+42537202  0 drwxr-xr-x  5  alex staff  160 122-8-28 16:30 test/FirstA/SecondB/ForthD 
+42537219  0 drwxr-xr-x  3  alex staff  96 122-8-28 16:30 test/FirstA/SecondB/ForthD/SixthF 
+42537566  0 rrw-r--r--  1  alex staff  0 122-8-28 16:30 test/FirstA/SecondB/ForthD/everything 
+42602024  0 drwxr-xr-x  2  alex staff  64 122-8-29 20:22 test/what 
+
+
